@@ -32,23 +32,25 @@ torchrun --standalone --nproc_per_node=8 train.py config/train_owt.py config/lar
 torchrun --standalone --nproc_per_node=8 train.py config/train_owt.py config/large_model.py
 
 
-# ===== 781M on Dolma — single A100-40GB =====
-# data prep (run once, multi-hour download + tokenize):
+# ===== 781M on Dolma — match the residual run on HF (Realmbird/mhc-781m-residual) =====
+# Same specs that produced the residual baseline:
+#   batch_size=4, gradient_accumulation_steps=16, max_iters=10000
+#   => 65,536 tokens/iter, ~655M tokens total
+# On H100-80GB this clocked ~25.9K tokens/sec ≈ 2.5s/iter ≈ ~7 hours per model.
+#
+# Prereq (run once, multi-hour download + tokenize):
 #   uv run python data/Dolma/prepare.py
 #
-# per-GPU memory budget for 781M (n_layer=36, n_head=20, n_embd=1280) on A100-40GB:
-#   batch_size=8, gradient_accumulation_steps=16, block_size=1024 => 131,072 tokens/iter
-# (original 8-GPU recipe was 1,048,576 tokens/iter; reduce iter count or accept fewer total tokens)
-#
-# residual baseline (no HC):
-torchrun --standalone --nproc_per_node=1 train.py config/train_dolma.py config/large_781m.py \
-    --batch_size=8 --gradient_accumulation_steps=16
 # mHC-lite:
-torchrun --standalone --nproc_per_node=1 train.py config/train_dolma.py config/large_781m.py config/with_mhc_lite.py \
-    --batch_size=8 --gradient_accumulation_steps=16
+torchrun --standalone --nproc_per_node=1 train.py \
+    config/train_dolma.py config/large_781m.py config/with_mhc_lite.py \
+    --batch_size=4 --gradient_accumulation_steps=16 --max_iters=10000 \
+    --wandb_run_name=781m-mhc-lite
 # mHC:
-torchrun --standalone --nproc_per_node=1 train.py config/train_dolma.py config/large_781m.py config/with_mhc.py \
-    --batch_size=8 --gradient_accumulation_steps=16
+torchrun --standalone --nproc_per_node=1 train.py \
+    config/train_dolma.py config/large_781m.py config/with_mhc.py \
+    --batch_size=4 --gradient_accumulation_steps=16 --max_iters=10000 \
+    --wandb_run_name=781m-mhc
 
 
 
