@@ -12,3 +12,9 @@ env/
 venv/
 wandb
 
+
+# Dolma prep artifacts (regeneratable from prepare.py)
+data/Dolma/raw/
+data/Dolma/prep.log
+out-*/
+*.log
